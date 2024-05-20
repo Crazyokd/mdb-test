@@ -75,16 +75,36 @@ int main()
 #endif
 
 #ifdef ENABLE_UPDATE_TEST
-    for (int i = 0; i < EXEC_CNT; i++) {
-        int key = rand() % 10000;
-        bson_t *query = bson_new_from_json((const uint8_t *)create_query_doc(key).c_str(), -1, NULL);
-        update_or_insert_data_by_query(query, get_rand_json_string2(key).c_str(), driver->get_mongoc()->collection.gtpc);
-    }
     // for (int i = 0; i < EXEC_CNT; i++) {
     //     int key = rand() % 10000;
     //     bson_t *query = bson_new_from_json((const uint8_t *)create_query_doc(key).c_str(), -1, NULL);
-    //     update_data_by_query(query, get_rand_json_string2(key).c_str(), driver->get_mongoc()->collection.gtpc);
+    //     update_or_insert_data_by_query(query, get_rand_json_string2(key).c_str(), driver->get_mongoc()->collection.gtpc);
     // }
+
+    /* exec 10000 times need 15s */
+    for (int i = 0; i < EXEC_CNT; i++) {
+        int key = rand() % 10000;
+        bson_t *query = bson_new_from_json((const uint8_t *)create_query_doc(key).c_str(), -1, NULL);
+        update_data_by_query(query, get_rand_json_string2(key).c_str(), driver->get_mongoc()->collection.gtpc);
+    }
+
+    /* exec 10000 times need 17.5s */
+    // mongoc_bulk_operation_t *bulk = mongoc_collection_create_bulk_operation_with_opts(driver->get_mongoc()->collection.gtpc, NULL);
+    // for (int i = 0; i < EXEC_CNT; i++) {
+    //     int key = rand() % 10000;
+    //     bson_t *query = bson_new_from_json((const uint8_t *)create_query_doc(key).c_str(), -1, NULL);
+    //     bson_t *doc = bson_new_from_json((const uint8_t *)get_rand_json_string2(key).c_str(), -1, NULL);
+    //     bson_t *update = BCON_NEW("$set", BCON_DOCUMENT(doc));
+    //     mongoc_bulk_operation_update(bulk, query, update, true);
+    //     bson_destroy(update);
+    //     bson_destroy(doc);
+    //     bson_destroy(query);
+    // }
+    // int ret = mongoc_bulk_operation_execute(bulk, NULL, NULL);
+    // if (!ret) {
+    //     fprintf(stderr, "error buck operation execute\n");
+    // }
+    // mongoc_bulk_operation_destroy(bulk);
 #endif
 
 #ifdef ENABLE_ARRAY_TEST
