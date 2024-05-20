@@ -157,6 +157,27 @@ int update_or_insert_data_by_query(bson_t *query, const char *json_data,
     mongoc_cursor_destroy(cursor);
 }
 
+int update_data_by_query(bson_t *query, const char *json_data,
+                         mongoc_collection_t *c)
+{
+    bson_error_t error;
+
+    bson_t *bson = bson_new_from_json((const uint8_t *)json_data, -1, &error);
+    if (!bson) {
+        bson_destroy(query);
+        fprintf(stderr, "%s\n", error.message);
+        return EXIT_FAILURE;
+    }
+    bson_t *update = BCON_NEW("$set", BCON_DOCUMENT(bson));
+    bson_t *opt = BCON_NEW("upsert", BCON_BOOL(true));
+    mongoc_collection_update_one(c, query, update, opt, NULL, &error);
+    bson_destroy(opt);
+    bson_destroy(update);
+
+    bson_destroy(bson);
+    bson_destroy(query);
+}
+
 int update_or_insert_line_info(bson_t *query, const char *json_data,
                                mongoc_collection_t *c, const char **line_nos,
                                int line_no_cnt)
@@ -220,6 +241,26 @@ int update_or_insert_line_info(bson_t *query, const char *json_data,
     bson_destroy(doc);
     bson_destroy(query);
     mongoc_cursor_destroy(cursor);
+}
+
+int update_line_info(bson_t *query, mongoc_collection_t *c, const char **line_nos, int line_no_cnt)
+{
+    bson_error_t error;
+    bson_t *line_array = bson_new();
+    for (int i = 0; i < line_no_cnt; i++) {
+        char str[10];
+        sprintf(str, "%d", i);
+        BSON_APPEND_UTF8(line_array, str, line_nos[i]);
+    }
+
+    bson_t *update = BCON_NEW("$addToSet", "{", "line_no", "{", "$each", BCON_ARRAY(line_array), "}", "}");
+    bson_t *opts = BCON_NEW("upsert", BCON_BOOL(true));
+    mongoc_collection_update_one(c, query, update, opts, NULL, &error);
+
+    bson_destroy(opts);
+    bson_destroy(update);
+    bson_destroy(line_array);
+    bson_destroy(query);
 }
 
 MongoDriver::MongoDriver(const char *uri)

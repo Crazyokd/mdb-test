@@ -16,14 +16,50 @@ std::string get_rand_json_string()
     return oss.str();
 }
 
-#define EXEC_CNT 1000
+std::string create_query_doc(int key)
+{
+    std::ostringstream oss;
+    oss << "{";
+    oss << "\"key\": " << key;
+    oss << "}";
+    return oss.str();
+}
+
+std::string get_rand_json_string2(int key)
+{
+    std::ostringstream oss;
+    oss << "{";
+    oss << "\"key\": " << key << ", ";
+    oss << "\"AAA\": " << rand() << ", ";
+    oss << "\"BBB\": " << rand() << ", ";
+    oss << "\"CCC\": " << rand() << ", ";
+    oss << "\"DDD\": " << rand() << ", ";
+    oss << "\"EEE\": " << rand();
+    oss << "}";
+    return oss.str();
+}
+
+std::string get_rand_json_string3(int key)
+{
+    std::ostringstream oss;
+    oss << "{";
+    oss << "\"key\": " << key << ", ";
+    oss << "\"AAA\": " << rand() << ", ";
+    oss << "\"BBB\": " << rand() << ", ";
+    oss << "\"CCC\": " << rand() << ", ";
+    oss << "\"line_name\": [" << (rand()+1000) << "]";
+    oss << "}";
+    return oss.str();
+}
+
+#define EXEC_CNT 10000
 int main()
 {
-    printf("hello world\n");
-
     MongoDriver *driver = new MongoDriver("mongodb://localhost/test");
     bson_t **docs = (bson_t **)malloc(sizeof(bson_t *) * EXEC_CNT);
 
+    // 使用当前时间作为随机数种子
+    srand(time(0));
     // 记录程序开始时间
     time_t start_time;
     time(&start_time);
@@ -40,7 +76,43 @@ int main()
 
 #ifdef ENABLE_UPDATE_TEST
     for (int i = 0; i < EXEC_CNT; i++) {
-        update_or_insert_data_by_query(bson_new(), get_rand_json_string().c_str(), driver->get_mongoc()->collection.gtpc);
+        int key = rand() % 10000;
+        bson_t *query = bson_new_from_json((const uint8_t *)create_query_doc(key).c_str(), -1, NULL);
+        update_or_insert_data_by_query(query, get_rand_json_string2(key).c_str(), driver->get_mongoc()->collection.gtpc);
+    }
+    // for (int i = 0; i < EXEC_CNT; i++) {
+    //     int key = rand() % 10000;
+    //     bson_t *query = bson_new_from_json((const uint8_t *)create_query_doc(key).c_str(), -1, NULL);
+    //     update_data_by_query(query, get_rand_json_string2(key).c_str(), driver->get_mongoc()->collection.gtpc);
+    // }
+#endif
+
+#ifdef ENABLE_ARRAY_TEST
+//     for (int i = 0; i < EXEC_CNT; i++) {
+//         int key = rand() % 10000;
+//         bson_t *query = bson_new_from_json((const uint8_t *)create_query_doc(key).c_str(), -1, NULL);
+// #define LINE_NO_CNT 1
+//         char **line_nos = (char **)malloc(sizeof(char *) * LINE_NO_CNT);
+//         for (int i = 0; i < LINE_NO_CNT; i++) {
+//             line_nos[i] = "dal";
+//         }
+//         update_or_insert_line_info(query, get_rand_json_string3(key).c_str(), driver->get_mongoc()->collection.gtpc,
+//                                    line_nos, LINE_NO_CNT);
+//         free(line_nos);
+//     }
+
+    for (int i = 0; i < EXEC_CNT; i++) {
+        int key = rand() % 10000;
+        bson_t *query = bson_new_from_json((const uint8_t *)create_query_doc(key).c_str(), -1, NULL);
+#define LINE_NO_CNT 1
+        char **line_nos = (char **)malloc(sizeof(char *) * LINE_NO_CNT);
+        for (int i = 0; i < LINE_NO_CNT; i++) {
+            // line_nos[i] = (char *)std::to_string(rand()).c_str();
+            line_nos[i] = "";
+        }
+        update_line_info(query, driver->get_mongoc()->collection.gtpc,
+                         line_nos, LINE_NO_CNT);
+        free(line_nos);
     }
 #endif
 

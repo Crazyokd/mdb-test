@@ -36,7 +36,9 @@ typedef struct ogs_mongoc_s
 
 /* API */
 int update_or_insert_data_by_query(bson_t *query, const char *json_data, mongoc_collection_t *c);
+int update_data_by_query(bson_t *query, const char *json_data, mongoc_collection_t *c);
 int update_or_insert_line_info(bson_t *query, const char *json_data, mongoc_collection_t *c, const char **line_nos, int line_no_cnt);
+int update_line_info(bson_t *query, mongoc_collection_t *c, const char **line_nos, int line_no_cnt);
 int insert_data_directly(const char *json_data, mongoc_collection_t *c);
 int insert_many_docs_directly(bson_t **docs, size_t size, mongoc_collection_t *c);
 
